@@ -1,22 +1,50 @@
 // Global variables
 var glob_board=null;
-var glob_turn = 0;
+var glob_turn = 1;
+var glob_initialTurn = glob_turn;
+var glob_aiPlayers = [new AI(0), new AI(1)];
+
+const AI_PLAYERS_DELAY = 0;
+const DELAY_BETWEEN_AI_GAMES = 0;
 
 // On page loaded
 // Generate board, starting chips and update displayed info.
 window.onload = function(event) {
-	document.getElementById("pass").addEventListener("click", passTurn);
+    document.getElementById("pass").addEventListener("click", function () {
+        makeMove(null);
+    });
+    document.getElementById("restart").addEventListener("click", function () {
+        newGame();
+    });
 
+    newGame();
+};
+
+/**
+ * Prepares a new game
+ */
+function newGame() {
 	generateBoard();
 	generateStartingChips();
+    glob_turn = 1 - glob_initialTurn;
+    glob_initialTurn = glob_turn;
+
+    // Generate only one tree, to save space
+    glob_aiPlayers[0].init(glob_board, glob_turn);
+    glob_aiPlayers[1].initFromOthersTree(glob_aiPlayers[0]);
+
 	updateInfo();
-};
+    setTimeout(letAiTryToMove, AI_PLAYERS_DELAY);
+}
 
 /**
  * Generates the game board in #content
  */
 function generateBoard() {
 	var content = document.getElementById("content");
+    while (content.firstChild) {
+        content.removeChild(content.firstChild);
+    }
 	var table = document.createElement("table");
 	glob_board = [];
 	for(var i=0; i<8; i+=1) {
@@ -55,7 +83,7 @@ function generateStartingChips() {
  * @param event the generated event
  */
 function tdEntered(event) {
-	if(document.getElementById("showMovePrediction").checked) {
+    if (document.getElementById("showMovePrediction").checked && glob_aiPlayers[glob_turn] === null) {
 		var td = event.target;
 		var fP = getFlankedPositions(td.getAttribute("data-i"), td.getAttribute("data-j"), glob_turn);
 		fP.forEach(function(turned) {
@@ -86,17 +114,43 @@ function tdLeft(event) {
  * @param event the generated event
  */
 function tdClicked(event) {
-	var td = event.target;
-	var fP = getFlankedPositions(td.getAttribute("data-i"), td.getAttribute("data-j"), glob_turn);
-	fP.forEach(function(turned) {
-		if(turned) {
-			turned.setAttribute("data-chip", "p"+glob_turn);
-			turned.setAttribute("class", "");	
+    if (glob_aiPlayers[glob_turn] === null)
+        makeMove(event.target);
+}
+
+/**
+ * Makes the next movement on the indicated td
+ * @param td the td that will be turned (or null to pass)
+ */
+function makeMove(td) {
+    var move = null;
+    if (td !== null) {
+        move = [parseInt(td.getAttribute("data-i")), parseInt(td.getAttribute("data-j"))];
+        var fP = getFlankedPositions(td.getAttribute("data-i"), td.getAttribute("data-j"), glob_turn);
+        fP.forEach(function (turned) {
+            if (turned) {
+                turned.setAttribute("data-chip", "p" + glob_turn);
+                turned.setAttribute("class", "");
+            }
+        });
+    }
+    if (td === null || fP.length > 0) {
+        passTurn(move);
+        checkEndOrTellAiToMove();
+    }
+}
+
+/**
+ * If the turn is AI's turn, it will ask the AI for its movement
+ */
+function letAiTryToMove() {
+    if (glob_aiPlayers[glob_turn] !== null) {
+        var coords = glob_aiPlayers[glob_turn].play();
+        if (coords !== null) {
+            makeMove(glob_board[coords[0]][coords[1]]);
+        } else {
+            makeMove(null);
 		}
-	});
-	if(fP.length > 0) {
-		passTurn();
-		checkEnd();
 	}
 }
 
@@ -138,7 +192,7 @@ function getFlankedPositions(i, j, player) {
  * @param j {int} component j of the position
  * @param di {int} component di of the advance
  * @param dj {int} component dj of the advance
- * @param payer {int} player who has the turn
+ * @param player {int} player who has the turn
  * @returns {Array}
  */
 function getFlankedLine(i, j, di, dj, player) {
@@ -174,7 +228,7 @@ function getFlankedLine(i, j, di, dj, player) {
 /**
  * Checks if the player has legal moves available
  * @param player {int} the player to check the moves (0 or 1)
- * @returns {bool}
+ * @returns {boolean}
  */
 function canMove(player) {
 	for(var i=0; i<8; i++) 
@@ -188,31 +242,56 @@ function canMove(player) {
 
 /**
  * Passes the turn
+ * @param lastMove coords of the last movement (to notify AIs)
  */
-function passTurn() {
+function passTurn(lastMove) {
+    if (!lastMove) lastMove = null;
+	
 	glob_turn = 1 - glob_turn;
 	updateInfo();
+    // Notify AIs of the movement
+    for (var i = 0; i < glob_aiPlayers.length; i++)
+        if (glob_aiPlayers[i] !== null)
+            glob_aiPlayers[i].notifyMovement(lastMove, glob_turn);
 }
 
 /**
  * Checks if the game is ended (nobody can move)
  */
-function checkEnd() {
-	if(!canMove(1) && !canMove(0))
+function checkEndOrTellAiToMove() {
+    if (!canMove(1) && !canMove(0)) {
 		showWhoWins();
+        // If both of them are AI, restart the game
+        if (glob_aiPlayers[0] !== null && glob_aiPlayers[1] !== null)
+            setTimeout(newGame, DELAY_BETWEEN_AI_GAMES);
+    } else {
+        setTimeout(letAiTryToMove, AI_PLAYERS_DELAY);
+    }
 }
 
 /**
  * Shows who have won
  */
 function showWhoWins() {
-	var chips = countChips();	
-	if( chips[0] > chips[1])
-		alert("White player wins!");
-	else if( chips[1] > chips[0])
-		alert("Black player wins!");
+    var chips = countChips();
+    var text;
+    if (chips[0] > chips[1]) {
+        text = "White player wins!";
+    } else if (chips[1] > chips[0]) {
+        text = "Black player wins!";
+    } else {
+        text = "Draw :(";
+    }
+
+    if (glob_aiPlayers[0] !== null && glob_aiPlayers[1] !== null)
+        console.log(text);
 	else
-		alert("Draw :(");
+        alert(text);
+
+    // Notify AIs of the end (to calculate NN fitness)
+    for (var i = 0; i < glob_aiPlayers.length; i++)
+        if (glob_aiPlayers[i] !== null)
+            glob_aiPlayers[i].end();
 }
 
 /**
@@ -253,7 +332,7 @@ function updateInfo() {
 
 /**
  * Checks if the square (i, j) exists
- * @returns {bool}
+ * @returns {boolean}
  */
 function exists(i, j) {
 	return i >= 0 && i < 8 && j >= 0 && j < 8;
