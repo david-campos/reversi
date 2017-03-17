@@ -2,9 +2,8 @@
  * Code made by David Campos Rodríguez
  * All rights reserved
  */
-var fs = require('fs');
 
-var players = [new ai.AI(0), new ai.AI(1)];
+var players = [new AI(0), new AI(1)];
 var initialTurn = 1;
 
 startGame();
@@ -16,13 +15,15 @@ function startGame() {
         var line = [];
         for (var j = 0; j < 8; j++) {
             if ((i == 4 || i == 3) && (j == 4 || j == 3))
-                empty.push([i, j]);
-            else
                 line.push(i == j ? 0 : 1);
+            else {
+                line.push(-1);
+                empty.push([i, j]);
+            }
         }
         data.push(line);
     }
-    var startingTreeNode = new ai.TreeNode(data, 0, empty);
+    var startingTreeNode = new TreeNode(data, 0, empty);
     players.forEach((p)=>p.initFromTree(startingTreeNode));
     initialTurn = 1 - initialTurn;
     gameLoop();
@@ -30,12 +31,14 @@ function startGame() {
 
 function gameLoop() {
     var turn = initialTurn;
+    var ended = false;
     do {
         var movement = players[turn].play();
         turn = 1 - turn;
         players[0].notifyMovement(movement, turn);
         players[1].notifyMovement(movement, turn);
-        var ended = isGameEnded();
+        if (movement === null)
+            ended = isGameEnded(turn);
     } while (!ended);
 
     var endMatrix = players[0].getTree().matrix;
@@ -45,7 +48,7 @@ function gameLoop() {
         for (var j = 0; j < endMatrix[i].length; j++) {
             if (endMatrix[i][j] === 0) {
                 result[0]++;
-            } else if (this._tree.matrix[i][j] === -1) {
+            } else if (endMatrix[i][j] === 1) {
                 result[1]++;
             } else {
                 result.empty++;
@@ -72,10 +75,10 @@ function gameLoop() {
     setTimeout(startGame, 0);
 }
 
-function isGameEnded() {
+function isGameEnded(turn) {
     var tree = players[turn].getTree();
     var validForMoving = (emptySquare) =>
-        (ai.AI.prototype.getFlankedPositions(tree, emptySquare[0], emptySquare[1], 0).length > 0 ||
-        ai.AI.prototype.getFlankedPositions(tree, emptySquare[0], emptySquare[1], 1).length > 0);
+        (AI.prototype.getFlankedPositions(tree, emptySquare[0], emptySquare[1], 0).length > 0 ||
+        AI.prototype.getFlankedPositions(tree, emptySquare[0], emptySquare[1], 1).length > 0);
     return !tree.emptySquares.some(validForMoving);
 }
