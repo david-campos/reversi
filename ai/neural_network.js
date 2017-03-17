@@ -2,13 +2,13 @@
  * Population of a generation, it should be a even number
  * @type {number}
  */
-const GENERATION_POPULATION = 10;
+const GENERATION_POPULATION = 1000;
 /**
  * Number of survivors when we decide to kill some individuals
  * of the generation
  * @type {number}
  */
-const GENERATION_SURVIVORS = 5;
+const GENERATION_SURVIVORS = 500;
 /**
  * Probability for an individual to try to reproduce
  * @type {number}
@@ -71,7 +71,6 @@ var NNBank = function () {
     this._generationNumber = -1;
     this._generation = [];
     this._currentIndex = -1;
-    log({logtype: "newlog"});
 };
 
 NNBank.prototype = {
@@ -101,13 +100,9 @@ NNBank.prototype = {
      */
     initialGeneration: function () {
         this._generation = [];
-        var bornArray = [];
         for (var i = 0; i < GENERATION_POPULATION; i++) {
             this._generation.push(new Individual(0, i));
-            bornArray.push(i + ",-1,-1,-1,-1");
         }
-
-        log({logtype: "born", generation: 0, born: bornArray.join(";")});
 
         this._currentIndex = 0;
         this._generationNumber = 0;
@@ -137,7 +132,6 @@ NNBank.prototype = {
                     (individual.nn.getFitness() - min) / amp;
         }
         console.log("Generation " + this.getGenerationNumber() + " fitness min and max", min, max);
-        log({logtype: "fitness", generation: this.getGenerationNumber(), fitness: fitnessArray.join(";")});
     },
 
     /**
@@ -158,11 +152,6 @@ NNBank.prototype = {
                 this._generation.unshift(individual);
             }
         }
-        var killedArray = [];
-        for (let killed of this._generation) {
-            killedArray.push(killed.nn.generation + "," + killed.nn.identifier);
-        }
-        log({logtype: "killed", generation: this.getGenerationNumber(), killed: killedArray.join(";")});
         this._generation = survivors;
     },
 
@@ -177,7 +166,6 @@ NNBank.prototype = {
             return;
 
         var babies = [];
-        var bornArray = []; // For logging purposes
         var previousParent = null;
         while (babies.length < neededBabies) {
             var survivor = this._generation.pop();
@@ -191,9 +179,6 @@ NNBank.prototype = {
                 } else {
                     // This is the second parent, mix the weights
                     babies.push(this.reproduceIndividuals(babies.length, previousParent, survivor));
-                    bornArray.push(babies.length - 1 + "," +
-                        previousParent.nn.generation + "," + previousParent.nn.identifier + "," +
-                        survivor.nn.generation + "," + survivor.nn.identifier);
                     previousParent = null;
                 }
             }
@@ -209,8 +194,6 @@ NNBank.prototype = {
         // Reset generation params
         this._generationNumber++;
         this._currentIndex = 0;
-
-        log({logtype: "born", generation: this.getGenerationNumber(), born: bornArray.join(";")});
     },
 
     /**

@@ -9,8 +9,8 @@ const DELAY_BETWEEN_AI_GAMES = 0;
 
 // On page loaded
 // Generate board, starting chips and update displayed info.
-window.onload = function(event) {
-    document.getElementById("pass").addEventListener("click", function () {
+window.onload = function () {
+	document.getElementById("pass").addEventListener("click", function () {
         makeMove(null);
     });
     document.getElementById("restart").addEventListener("click", function () {

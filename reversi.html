@@ -1,32 +1,32 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<title>Othello - David Campos R.</title>
-	<meta charset="UTF-8">
-	<meta name="description" content="Othello game in HTML5">
-	<meta name="author" content="David Campos R.">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script src="ajax_logs.js" type="text/javascript"></script>
-    <script src="neural_network.js" type="text/javascript"></script>
-	<script src="reversi_ai.js" type="text/javascript"></script>
-    <script src="reversi_script.js" type="text/javascript"></script>
-	<link rel="stylesheet" type="text/css" href="reversi_style.css">
+    <title>Othello - David Campos R.</title>
+    <meta charset="UTF-8">
+    <meta name="description" content="Othello game in HTML5">
+    <meta name="author" content="David Campos R.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="ai/neural_network.js" type="text/javascript"></script>
+    <script src="ai/reversi_ai.js" type="text/javascript"></script>
+    <script src="chrome_interface/reversi_script.js" type="text/javascript"></script>
+    <link rel="stylesheet" type="text/css" href="chrome_interface/reversi_style.css">
 </head>
 <body>
-<header><h1>Othello</h1><h3>David Campos R.</h3></header>
+<header><h1>Reversi</h1>
+    <h3>David Campos R.</h3></header>
 <div id="content">
 </div>
 <aside>
     <button id="restart" type="button">Restart game</button>
-<p>Turn: </p>
-<div id="turn"></div>
-<button id="pass" type="button">Pass</button>
-<p>Black chips: <span id="blackChips"></span></p>
-<p>White chips: <span id="whiteChips"></span></p>
-<form id="config">
-<input type="checkbox" id="showMovePrediction" checked>
-<label for="showMovePrediction">Show move prediction</label>
-</form>
+    <p>Turn: </p>
+    <div id="turn"></div>
+    <button id="pass" type="button">Pass</button>
+    <p>Black chips: <span id="blackChips"></span></p>
+    <p>White chips: <span id="whiteChips"></span></p>
+    <form id="config">
+        <input type="checkbox" id="showMovePrediction" checked>
+        <label for="showMovePrediction">Show move prediction</label>
+    </form>
 </aside>
 </body>
 </html>
