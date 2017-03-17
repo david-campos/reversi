@@ -1,4 +1,9 @@
 /**
+ * Code made by David Campos Rodríguez
+ * All rights reserved
+ */
+
+/**
  * Population of a generation, it should be a even number
  * @type {number}
  */

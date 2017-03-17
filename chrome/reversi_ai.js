@@ -1,6 +1,16 @@
-// Requires reversi_script.js and neural_network.js
+/**
+ * Code made by David Campos Rodríguez
+ * All rights reserved
+ */
 
+// Remember this code requires neural_network.js
+
+/**
+ * Global Neural Network bank
+ * @type {NNBank}
+ */
 var glob_networkBank = new NNBank();
+
 /**
  * General tree node constructor
  */
@@ -17,12 +27,21 @@ var TreeNode = function(matrix, turn, emptySquares) {
 
 /**
  * AI constructor
+ * @param aiPlayerNumber {int} number of player for this AI so it can identify itself in the data received
+ * @param [neuralNetwork] {NN} fixed neural network for the AI (if set, the AI won't use the NNBank)
+ * @constructor
  */
-var AI = function(aiPlayerNumber) {
+var AI = function (aiPlayerNumber, neuralNetwork) {
 	this._player = aiPlayerNumber;
 	this._tree = null;
-	// Get a new neural network to work with
-	this.neuralNetwork = glob_networkBank.getNN();
+	if (neuralNetwork) {
+		this.neuralNetwork = neuralNetwork;
+		this._useBank = false;
+	} else {
+		// Get a new neural network to work with
+		this.neuralNetwork = glob_networkBank.getNN();
+		this._useBank = true;
+	}
 };
 
 AI.prototype = {
@@ -64,11 +83,13 @@ AI.prototype = {
 		return this._tree;
 	},
 	/**
-	 * Asks the neural network bank for a new network
+	 * Asks the neural network bank for a new network. It has no effect
+	 * if the AI has a fixed neural network
 	 */
 	getNewNN: function () {
 		// Get a new neural network to work with
-		this.neuralNetwork = glob_networkBank.getNN();
+		if (this._useBank)
+			this.neuralNetwork = glob_networkBank.getNN();
 	},
 	/**
 	 * Notifies the AI a movement have been done, or the turn has been passed
@@ -78,7 +99,7 @@ AI.prototype = {
 	notifyMovement: function (movement, newTurn) {
 		if (movement !== null) {
 			this.createChildren(this._tree);
-			var step = movement[0] + ',' + movement[1];
+			var step = movement.join(',');
 			this._tree = this._tree.children[step];
 		} else {
 			// If movement is null it means the other player passed the turn
@@ -149,19 +170,26 @@ AI.prototype = {
 
 	/**
 	 * Called when the game ends, causes the AI to evaluate his current NN
+	 * @param [chipCount] {{0:int,1:int,empty:int}} chip count for each player and empty ones
 	 */
-	end: function () {
+	end: function (chipCount) {
 		var myChips = 0, hisChips = 0, emptyOnes = 0;
-		for (var i = 0; i < this._tree.matrix.length; i++) {
-			for (var j = 0; j < this._tree.matrix[i].length; j++) {
-				if (this._tree.matrix[i][j] === this._player) {
-					myChips++;
-				} else if (this._tree.matrix[i][j] === -1) {
-					emptyOnes++;
-				} else {
-					hisChips++;
+		if (!chipCount) {
+			for (var i = 0; i < this._tree.matrix.length; i++) {
+				for (var j = 0; j < this._tree.matrix[i].length; j++) {
+					if (this._tree.matrix[i][j] === this._player) {
+						myChips++;
+					} else if (this._tree.matrix[i][j] === -1) {
+						emptyOnes++;
+					} else {
+						hisChips++;
+					}
 				}
 			}
+		} else {
+			myChips = chipCount[this._player];
+			hisChips = chipCount[1 - this._player];
+			emptyOnes = chipCount.empty;
 		}
 		var fitness = (myChips + emptyOnes) / (myChips + hisChips + emptyOnes);
 		this.neuralNetwork.setFitness(this.neuralNetwork.getFitness() + fitness);

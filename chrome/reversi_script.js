@@ -1,3 +1,12 @@
+/**
+ * Code made by David Campos Rodríguez
+ * All rights reserved
+ */
+
+/**
+ * Global game board
+ * @type {null}
+ */
 // Global variables
 var glob_board=null;
 var glob_turn = 1;
